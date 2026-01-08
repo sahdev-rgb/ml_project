@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salary Predictor Pro - 2026</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 350px; text-align: center; }
+        h2 { color: #333; margin-bottom: 20px; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
+        button { width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.3s; margin-top: 10px; }
+        button:hover { background-color: #0056b3; }
+        #result { margin-top: 25px; font-size: 1.2rem; font-weight: bold; color: #28a745; min-height: 30px; }
+        .error { color: #dc3545 !important; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Salary Predictor</h2>
+    
+    <!-- इनपुट फील्ड्स आपके 5 फीचर्स के अनुसार -->
+    <input type="number" id="age" placeholder="उम्र (Age) डालें" step="1">
+    
+    <select id="gender">
+        <option value="" disabled selected>Gender चुनें</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+    </select>
+
+    <input type="text" id="education" placeholder="Education (e.g. Bachelor's)">
+    
+    <input type="text" id="job_title" placeholder="Job Title (e.g. Data Scientist)">
+    
+    <input type="number" id="experience" placeholder="अनुभव (Years of Experience)" step="0.1">
+
+    <button onclick="getPrediction()">Predict Salary</button>
+
+    <div id="result"></div>
+</div>
+
+<script>
+    async function getPrediction() {
+        const resultDiv = document.getElementById('result');
+        resultDiv.classList.remove('error');
+        
+        // 1. डेटा इकट्ठा करें
+        const age = document.getElementById('age').value;
+        const gender = document.getElementById('gender').value;
+        const education = document.getElementById('education').value;
+        const job_title = document.getElementById('job_title').value;
+        const experience = document.getElementById('experience').value;
+
+        // 2. वैलिडेशन चेक
+        if (!age || !gender || !education || !job_title || !experience) {
+            resultDiv.classList.add('error');
+            resultDiv.innerText = "सभी फील्ड्स भरें!";
+            return;
+        }
+
+        const payload = {
+            age: parseFloat(age),
+            gender: gender,
+            education: education,
+            job_title: job_title,
+            experience: parseFloat(experience)
+        };
+
+        resultDiv.innerText = "Processing...";
+
+        try {
+            // 🚀 सही URL http:// के साथ (CORS एरर फिक्स)
+            const response = await fetch("http://127.0.0.1:8000/predict?", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error('Server connectivity issue');
+            }
+
+            const data = await response.json();
+            
+            // 3. रिजल्ट दिखाएं
+            if (data.salary) {
+                resultDiv.innerText = "Estimated Salary: ₹" + data.salary.toLocaleString();
+            } else if (data.predicted_salary) {
+                resultDiv.innerText = "Estimated Salary: ₹" + data.predicted_salary.toLocaleString();
+            } else if (data.error) {
+                resultDiv.classList.add('error');
+                resultDiv.innerText = "Error: " + data.error;
+            }
+        } catch (error) {
+            console.error('Fetch Error:', error);
+            resultDiv.classList.add('error');
+            resultDiv.innerText = "Server Offline! (Check Python)";
+        }
+    }
+</script>
+
+</body>
+</html>
